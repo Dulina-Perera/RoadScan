@@ -1,2 +1,5 @@
 # Ignore directories containing data files.
 **/resources/**/*
+
+# Ignore `.env` files.
+.env
