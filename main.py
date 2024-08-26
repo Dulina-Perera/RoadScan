@@ -36,16 +36,23 @@ while ret:
 
   if ret and frame_no < 10:
     # Detect vehicles.
-    detections: ndarray = coco_model(frame)[0]
-    detections_: List[List[float]] = []
+    vehicles: ndarray = coco_model(frame)[0]
+    vehicles_: List[List[float]] = []
 
-    for detection in detections.boxes.data.tolist():
+    for detection in vehicles.boxes.data.tolist():
       x1: float; y1: float; x2: float; y2: float; score: float; class_id: float
       x1, y1, x2, y2, score, class_id = detection
 
       if int(class_id) in VEHICLES:
-        detections_.append([x1, y1, x2, y2, score])
+        vehicles_.append([x1, y1, x2, y2, score])
 
     # Track vehicles.
-    track_ids: ndarray = tracker.update(np.asarray(detections_))
+    track_ids: ndarray = tracker.update(np.asarray(vehicles_))
+
+    # Detect license plates.
+    license_plates: ndarray = license_plate_detector(frame)[0]
+    for license_plate in license_plates.boxes.data.tolist():
+      x1, y1, x2, y2, score, class_id = license_plate
+
+      # Assign license plate to vehicle.
 
