@@ -1,7 +1,9 @@
 # %%
 import cv2
+import numpy as np
 
 from cv2 import VideoCapture
+from lib.sort.sort import *
 from numpy import ndarray
 from typing import List
 from ultralytics import YOLO
@@ -9,9 +11,10 @@ from ultralytics import YOLO
 # %%
 VEHICLES: List[int] = [2, 3, 5, 7]
 
+tracker: Sort = Sort()
+
 # %%
 # Load models.
-
 # Model to detect vehicles.
 coco_model: YOLO = YOLO(model='models/vehicle_detection/yolov8n.pt')
 
@@ -24,14 +27,14 @@ cap: VideoCapture = VideoCapture('./static/videos/1.mp4')
 
 # %%
 # Read video frames.
-frame_idx: int = -1
+frame_no: int = -1
 ret: bool = True
 while ret:
   frame: ndarray
   ret, frame = cap.read()
-  frame_idx += 1
+  frame_no += 1
 
-  if ret and frame_idx < 10:
+  if ret and frame_no < 10:
     # Detect vehicles.
     detections: ndarray = coco_model(frame)[0]
     detections_: List[List[float]] = []
@@ -42,3 +45,7 @@ while ret:
 
       if int(class_id) in VEHICLES:
         detections_.append([x1, y1, x2, y2, score])
+
+    # Track vehicles.
+    track_ids: ndarray = tracker.update(np.asarray(detections_))
+
