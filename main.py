@@ -7,6 +7,7 @@ from lib.sort.sort import *
 from numpy import ndarray
 from typing import List
 from ultralytics import YOLO
+from utils import get_car, read_license_plate
 
 # %%
 VEHICLES: List[int] = [2, 3, 5, 7]
@@ -55,4 +56,19 @@ while ret:
       x1, y1, x2, y2, score, class_id = license_plate
 
       # Assign license plate to vehicle.
+      vehicle_x1, vehicle_y1, vehicle_x2, vehicle_y2, vehicle_id  = get_car(license_plate, track_ids)
+
+      # Crop license plate.
+      license_plate_cropped: ndarray = frame[int(y1):int(y2), int(x1):int(x2)]
+
+      # Process license plate.
+      license_plate_cropped_gray: ndarray = cv2.cvtColor(license_plate_cropped, cv2.COLOR_BGR2GRAY)
+
+      _: float; license_plate_cropped_thresh: ndarray
+      _, license_plate_cropped_thresh = cv2.threshold(license_plate_cropped_gray, 64, 255, cv2.THRESH_BINARY_INV)
+
+      # Read license plate.
+      license_plate_text, license_plate_text_score = read_license_plate(license_plate_cropped_thresh)
+
+      # Write results.
 
