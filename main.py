@@ -5,14 +5,16 @@ import numpy as np
 from cv2 import VideoCapture
 from lib.sort.sort import *
 from numpy import ndarray
-from typing import List
+from typing import Dict, List
 from ultralytics import YOLO
-from utils import get_car, read_license_plate
+from utils import get_car, read_license_plate, write_csv
 
 # %%
 VEHICLES: List[int] = [2, 3, 5, 7]
 
 tracker: Sort = Sort()
+
+results: Dict = {}
 
 # %%
 # Load models.
@@ -36,6 +38,8 @@ while ret:
   frame_no += 1
 
   if ret and frame_no < 10:
+    results[frame_no] = {}
+
     # Detect vehicles.
     vehicles: ndarray = coco_model(frame)[0]
     vehicles_: List[List[float]] = []
@@ -70,5 +74,18 @@ while ret:
       # Read license plate.
       license_plate_text, license_plate_text_score = read_license_plate(license_plate_cropped_thresh)
 
-      # Write results.
+      if license_plate_text is not None:
+        results[frame_no][vehicle_id] = {
+					'vehicle': {
+						'bbox': [vehicle_x1, vehicle_y1, vehicle_x2, vehicle_y2]
+					},
+					'license_plate': {
+						'bbox': [x1, y1, x2, y2],
+						'bbox_score': score,
+						'text': license_plate_text,
+						'text_score': license_plate_text_score
+					}
+				}
 
+# Write results.
+write_csv(results, './results.csv')

@@ -1,9 +1,61 @@
+# utils.py
+
+# %%
 from numpy import ndarray
-from typing import List, Tuple
+from typing import Dict, List, Tuple
+
+# %%
+def write_csv(results: Dict, output_path: str) -> None:
+  """
+		Write the results to a CSV file.
+
+		Args:
+				results (list): List of results to write to the CSV file.
+				output_path (str): Path to the output CSV file.
+	"""
+  with open(output_path, 'w') as file:
+    file.write(
+      '{},{},{},{},{},{},{}\n'.format(
+        'Frame_Number',
+        'Vehicle_ID',
+        'Vehicle_Bbox',
+        'License_Plate_Bbox',
+        'License_Plate_Bbox_Score',
+        'License_Number',
+        'License_Number_Score'
+      )
+    )
+
+    for frame_no in results.keys():
+      for vehicle_id in results[frame_no].keys():
+        if ('vehicle' in results[frame_no][vehicle_id].keys() and
+            'license_plate' in results[frame_no][vehicle_id].keys() and
+            'text' in results[frame_no][vehicle_id]['license_plate'].keys()):
+          file.write(
+            '{},{},{},{},{},{},{}\n'.format(
+							frame_no,
+							vehicle_id,
+							'[{} {} {} {}]'.format(
+								results[frame_no][vehicle_id]['vehicle']['bbox'][0],
+								results[frame_no][vehicle_id]['vehicle']['bbox'][1],
+								results[frame_no][vehicle_id]['vehicle']['bbox'][2],
+								results[frame_no][vehicle_id]['vehicle']['bbox'][3]
+							),
+							'[{} {} {} {}]'.format(
+								results[frame_no][vehicle_id]['license_plate']['bbox'][0],
+								results[frame_no][vehicle_id]['license_plate']['bbox'][1],
+								results[frame_no][vehicle_id]['license_plate']['bbox'][2],
+								results[frame_no][vehicle_id]['license_plate']['bbox'][3]
+							),
+							results[frame_no][vehicle_id]['license_plate']['bbox_score'],
+							results[frame_no][vehicle_id]['license_plate']['text'],
+							results[frame_no][vehicle_id]['license_plate']['text_score']
+						)
+					)
 
 
 def read_license_plate(license_plate_cropped: ndarray) -> Tuple:
-    """
+  """
     Read the license plate text from the given cropped image.
 
     Args:
@@ -11,9 +63,9 @@ def read_license_plate(license_plate_cropped: ndarray) -> Tuple:
 
     Returns:
         tuple: Tuple containing the formatted license plate text and its confidence score.
-    """
+  """
 
-    return (None, None)
+  return (0, 0)
 
 
 def get_car(license_plate: List, vehicle_track_ids: ndarray) -> Tuple:
