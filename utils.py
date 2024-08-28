@@ -1,8 +1,33 @@
 # utils.py
 
 # %%
+import string
+
+from easyocr import Reader
 from numpy import ndarray
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
+
+# %%
+reader: Reader = Reader(['en'])
+
+# Mappings for character conversion.
+CHAR_TO_INT: Dict[str, str] = {
+	'O': '0',
+	'I': '1',
+	'J': '3',
+	'A': '4',
+	'S': '5',
+	'G': '6'
+}
+
+INT_TO_CHAR: Dict[str, str] = {
+	'0': 'O',
+	'1': 'I',
+	'3': 'J',
+	'4': 'A',
+	'5': 'S',
+	'6': 'G'
+}
 
 # %%
 def get_car(license_plate: List, vehicle_track_ids: ndarray) -> Tuple:
@@ -27,6 +52,63 @@ def get_car(license_plate: List, vehicle_track_ids: ndarray) -> Tuple:
   return (-1, -1, -1, -1, -1)
 
 
+def license_complies_with_format(text: str) -> bool:
+  """
+    Check if the license plate text complies with the required format.
+
+    Args:
+        text (str): License plate text.
+
+    Returns:
+        bool: True if the license plate complies with the format, False otherwise.
+  """
+  if len(text) != 7:
+    return False
+
+  if (
+		(text[0] in string.ascii_uppercase or text[0] in INT_TO_CHAR.keys()) and
+		(text[1] in string.ascii_uppercase or text[1] in INT_TO_CHAR.keys()) and
+		(text[2] in [str(i) for i in range(10)] or text[2] in CHAR_TO_INT.keys()) and
+		(text[3] in [str(i) for i in range(10)] or text[3] in CHAR_TO_INT.keys()) and
+		(text[4] in string.ascii_uppercase or text[4] in INT_TO_CHAR.keys()) and
+		(text[5] in string.ascii_uppercase or text[5] in INT_TO_CHAR.keys()) and
+		(text[6] in string.ascii_uppercase or text[6] in INT_TO_CHAR.keys())
+	):
+    return True
+  else:
+    return False
+
+
+def format_license(text: str) -> str:
+  """
+    Format the license plate text by converting characters using the mapping dictionaries.
+
+    Args:
+        text (str): License plate text.
+
+    Returns:
+        str: Formatted license plate text.
+  """
+  text_: str = ''
+  mappings: Dict[int, Dict[str, str]] = {
+		0: INT_TO_CHAR,
+		1: INT_TO_CHAR,
+		2: CHAR_TO_INT,
+		3: CHAR_TO_INT,
+		4: INT_TO_CHAR,
+		5: INT_TO_CHAR,
+		6: INT_TO_CHAR
+	}
+
+  for i in [0, 1, 2, 3, 4, 5, 6]:
+    if text[i] in mappings[i].keys():
+      text_ += mappings[i][text[i]]
+    else:
+      text_ += text[i]
+
+  return text_
+
+
 def read_license_plate(license_plate_cropped: ndarray) -> Tuple:
   """
     Read the license plate text from the given cropped image.
@@ -37,8 +119,17 @@ def read_license_plate(license_plate_cropped: ndarray) -> Tuple:
     Returns:
         tuple: Tuple containing the formatted license plate text and its confidence score.
   """
+  detections: Any = reader.readtext(license_plate_cropped)
+  for detection in detections:
+    _, text, score = detection
 
-  return (0, 0)
+    text = text.upper().replace(' ', '')
+
+    if license_complies_with_format(text):
+      return (format_license(text), score)
+
+  return (None, None)
+
 
 
 def write_csv(results: Dict, output_path: str) -> None:

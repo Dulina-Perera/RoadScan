@@ -37,7 +37,7 @@ while ret:
   ret, frame = cap.read()
   frame_no += 1
 
-  if ret and frame_no < 10:
+  if ret:
     results[frame_no] = {}
 
     # Detect vehicles.
@@ -61,31 +61,31 @@ while ret:
 
       # Assign license plate to vehicle.
       vehicle_x1, vehicle_y1, vehicle_x2, vehicle_y2, vehicle_id  = get_car(license_plate, track_ids)
+      if vehicle_id != -1:
+        # Crop license plate.
+        license_plate_cropped: ndarray = frame[int(y1):int(y2), int(x1):int(x2)]
 
-      # Crop license plate.
-      license_plate_cropped: ndarray = frame[int(y1):int(y2), int(x1):int(x2)]
+				# Process license plate.
+        license_plate_cropped_gray: ndarray = cv2.cvtColor(license_plate_cropped, cv2.COLOR_BGR2GRAY)
 
-      # Process license plate.
-      license_plate_cropped_gray: ndarray = cv2.cvtColor(license_plate_cropped, cv2.COLOR_BGR2GRAY)
+        _: float; license_plate_cropped_thresh: ndarray
+        _, license_plate_cropped_thresh = cv2.threshold(license_plate_cropped_gray, 64, 255, cv2.THRESH_BINARY_INV)
 
-      _: float; license_plate_cropped_thresh: ndarray
-      _, license_plate_cropped_thresh = cv2.threshold(license_plate_cropped_gray, 64, 255, cv2.THRESH_BINARY_INV)
+				# Read license plate.
+        license_plate_text, license_plate_text_score = read_license_plate(license_plate_cropped_thresh)
 
-      # Read license plate.
-      license_plate_text, license_plate_text_score = read_license_plate(license_plate_cropped_thresh)
-
-      if license_plate_text is not None:
-        results[frame_no][vehicle_id] = {
-					'vehicle': {
-						'bbox': [vehicle_x1, vehicle_y1, vehicle_x2, vehicle_y2]
-					},
-					'license_plate': {
-						'bbox': [x1, y1, x2, y2],
-						'bbox_score': score,
-						'text': license_plate_text,
-						'text_score': license_plate_text_score
+        if license_plate_text is not None:
+          results[frame_no][vehicle_id] = {
+						'vehicle': {
+							'bbox': [vehicle_x1, vehicle_y1, vehicle_x2, vehicle_y2]
+						},
+						'license_plate': {
+							'bbox': [x1, y1, x2, y2],
+							'bbox_score': score,
+							'text': license_plate_text,
+							'text_score': license_plate_text_score
+						}
 					}
-				}
 
 # Write results.
 write_csv(results, './results.csv')
