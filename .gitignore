@@ -1,3 +1,6 @@
+# Ignore directories containing Python executables.
+__pycache__/
+
 # Ignore directories containing data files.
 **/resources/**/*
 

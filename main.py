@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 from cv2 import VideoCapture
-from lib.sort.sort import *
+from lib.sort.sort import Sort
 from numpy import ndarray
 from typing import Dict, List
 from ultralytics import YOLO
